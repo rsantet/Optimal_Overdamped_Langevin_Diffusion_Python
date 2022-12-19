@@ -16,3 +16,4 @@ The repository contains:
 ## TODO
 - Propose RWMH and MALA algorithms where the optimal diffusion computed with main.py can be used as parameter. Propose a visualization of the effect of the optimal diffusion in MCMC sampling algorithm.
 - Propose a visualization of the behaviour of the optimal diffusion in the asymptotic regime of periodic homogenization
+- Add a comparison with smooth-min approach with analytic gradient formula.
