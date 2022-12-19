@@ -9,11 +9,11 @@ Overdamped Langevin dynamics are used in many MCMC sampling algorithms to produc
 ## Files
 
 The repository contains:
-- main.py: the optimization algorithm.
-- potentials.py: examples of one-dimensional potentials (minus log of target measure).
+- main.py: the optimization algorithm
+- potentials.py: examples of one-dimensional potentials (minus log of target measure)
 - plot_optimized_diffusion.py: plot the optimized diffusion obtain from the main.py script
 
 ## TODO
-- Propose RWMH and MALA algorithms where the optimal diffusion computed with main.py can be used as parameter. Propose a visualization of the effect of the optimal diffusion in MCMC sampling algorithm.
+- Propose RWMH and MALA algorithms where the optimal diffusion computed with main.py can be used as parameter. Propose a visualization of the effect of the optimal diffusion in MCMC sampling algorithm
 - Propose a visualization of the behaviour of the optimal diffusion in the asymptotic regime of periodic homogenization
-- Add a comparison with smooth-min approach with analytic gradient formula.
+- Add a comparison with smooth-min approach with analytic gradient formula
