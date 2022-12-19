@@ -257,8 +257,8 @@ def optim_algo(V, I, pi, Z, p=2.0, a=0.0, b=np.inf, save=True, rewrite_save=True
     if save:
         x_opt = res.x
         XX = [i / I for i in range(0, I)]
-        mu_arr = np.fromiter(map(lambda x: np.exp(V(x)), XX), float)
-        d_opt = x_opt * mu_arr
+        inv_mu_arr = np.fromiter(map(lambda x: np.exp(V(x)), XX), float)
+        d_opt = x_opt * inv_mu_arr
         gap_opt = -res.fun
         min_D = np.min(x_opt)
 
