@@ -16,7 +16,8 @@ from potentials import *
 
 # Generalized eigenvalue problem: Au=\lambda Mu
 
-def optim_algo(V, I, pi, Z, p=2., a=0., b=np.inf, save=True, rewrite_save=True):
+
+def optim_algo(V, I, pi, Z, p=2.0, a=0.0, b=np.inf, save=True, rewrite_save=True):
     """Optimization algorithm to find optimal diffusion
 
     Args:
@@ -29,11 +30,11 @@ def optim_algo(V, I, pi, Z, p=2., a=0., b=np.inf, save=True, rewrite_save=True):
         b (float, optional): upper bound for the variable constraint. Defaults to np.inf.
         save (bool, optional): if saving first, second, third and fourth eigenvalues and the constraint value during the optimization procedure. Defaults to True.
         rewrite_save (bool, optional): if forcing save by rewriting previously saved data. Defaults to True.
-        
+
     Returns:
         OptimizeResult: the optimization result represented as a OptimizeResult object. See scipy.optimize.minimize page for available attributes.
     """
-    
+
     def lp_constraint(x, I, p):
         """Compute the L^p constraint
 
@@ -45,8 +46,8 @@ def optim_algo(V, I, pi, Z, p=2., a=0., b=np.inf, save=True, rewrite_save=True):
         Returns:
             float: value of the constraint for x
         """
-        return (np.sum(x**p) / I)**(1/p)
-    
+        return (np.sum(x**p) / I) ** (1 / p)
+
     def construct_M(I, pi):
         """Construct the matrix appearing on the right hand side of the generalized eigenvalue problem
 
@@ -102,7 +103,7 @@ def optim_algo(V, I, pi, Z, p=2., a=0., b=np.inf, save=True, rewrite_save=True):
             I (int): number of hat functions in P1 Finite Elements basis
             Z (float): partition function, equal to \int exp(-V)
             M (csr_matrix): matrix appearing on the right hand side of the generalized eigenvalue problem
-            
+
         Returns:
             float: first positive eigenvalue
         """
@@ -117,7 +118,7 @@ def optim_algo(V, I, pi, Z, p=2., a=0., b=np.inf, save=True, rewrite_save=True):
         idx = np.argsort(valp)
         valp = valp[idx]
         np.divide(1 - valp, valp, out=valp)
-        
+
         return valp[-2]
 
     def objective_function_gradient(x, I, Z, M):
@@ -128,11 +129,11 @@ def optim_algo(V, I, pi, Z, p=2., a=0., b=np.inf, save=True, rewrite_save=True):
             I (int): number of hat functions in P1 Finite Elements basis
             Z (float): partition function, equal to \int exp(-V)
             M (csr_matrix): matrix appearing on the right hand side of the generalized eigenvalue problem
-            
+
         Returns:
             tuple: (gradient (list), first eigenvalue (float), second eigenvalue (float), third eigenvalue (float), fourth eigenvalue (float), constraint value (float))
         """
-        
+
         # Construct the matrix depending on D
         A = construct_A(x, I, Z)
 
@@ -151,23 +152,23 @@ def optim_algo(V, I, pi, Z, p=2., a=0., b=np.inf, save=True, rewrite_save=True):
         vecp = np.real(vecp[:, idx[-2]])
         # Normalize in case it is not done properly by the algorithm
         vecp = vecp / np.sqrt(np.dot(vecp, M.dot(vecp)))
-        
+
         # for ergonomic reasons for gradient computation
         vp = np.zeros(I + 1)
         vp[range(I)] = vecp
         vp[I] = vp[0]
         # matrix corresponding to the tri-diagonal matrix A
         mat = np.array(([1, -1], [-1, 1]))
-        
+
         # compute the gradient
         gradD = np.zeros(I)
         for i in range(I):
             gradD[i] = np.dot(np.dot(mat, vp[range(i, i + 2)]), vp[i : (i + 2)]) * I / Z
-            
-        # compute the constraint 
+
+        # compute the constraint
         constraint = lp_constraint(x, I, p)
         return gradD, valp[-1], valp[-2], valp[-3], valp[-4], constraint
-    
+
     def f0(x):
         """Function to be minimized during the optimization procedure
 
@@ -198,19 +199,19 @@ def optim_algo(V, I, pi, Z, p=2., a=0., b=np.inf, save=True, rewrite_save=True):
             fourth_eigenvalue.append(tup[4])
             constraints.append(tup[5])
         return -tup[0]
-    
+
     ##### Optimization procedure
-    
+
     # Saving process
     if save:
-        a_rounded = np.round(a,2)
-        b_rounded = np.round(b,2)
+        a_rounded = np.round(a, 2)
+        b_rounded = np.round(b, 2)
         dir_string = "data/" + V.__name__ + f"/I_{I}_a_{a_rounded}_b_{b_rounded}/"
-        
+
         if not rewrite_save:
             if os.path.isfile(dir_string + "first_eigenvalue.txt"):
                 return
-        
+
         first_eigenvalue = []
         second_eigenvalue = []
         third_eigenvalue = []
@@ -219,13 +220,13 @@ def optim_algo(V, I, pi, Z, p=2., a=0., b=np.inf, save=True, rewrite_save=True):
 
     # Construct the matrix on the right hand side once and for all
     M = construct_M(I, pi)
-    
+
     # First guess for the optimization procedure, D=1/mu (homogenized diffusion)
     x_init = np.ones(I)
 
     # Constraints on the values of mu*D
     bounds = Bounds(a, b)
-    
+
     # L^p constraint on mu*D
     ineq_cons_norm = {
         "type": "ineq",
@@ -244,19 +245,19 @@ def optim_algo(V, I, pi, Z, p=2., a=0., b=np.inf, save=True, rewrite_save=True):
         options={"disp": True, "maxiter": 1000},
         tol=1e-8,
     )
-    
+
     # If failure
     if not res.success:
         print(res.message)
         print("\n")
         print("Not saving")
         return
-    
+
     # If success, saves
     if save:
         x_opt = res.x
         XX = [i / I for i in range(0, I)]
-        mu_arr = np.fromiter(map(lambda x:np.exp(V(x)), XX), float)
+        mu_arr = np.fromiter(map(lambda x: np.exp(V(x)), XX), float)
         d_opt = x_opt * mu_arr
         gap_opt = -res.fun
         min_D = np.min(x_opt)
@@ -280,28 +281,30 @@ def optim_algo(V, I, pi, Z, p=2., a=0., b=np.inf, save=True, rewrite_save=True):
     return res
 
 
+if __name__ == "__main__":
 
-if __name__ == '__main__':
-    
     I = 100
-    p=2
-    a = 0.
+    p = 2
+    a = 0.0
     b = np.inf
     V = cos_4
-        
+
     def mu(x):
         return np.exp(-V(x))
+
     XX = [i / I for i in range(0, I)]
     mu_arr = np.fromiter(map(mu, XX), float)
     Z = np.sum(mu_arr) / I
     pi_arr = mu_arr / Z
-    
-    #D_constant = (np.sum(mu_arr**p)/I)**(-1/p)
-    
+
+    # D_constant = (np.sum(mu_arr**p)/I)**(-1/p)
+
     optim_algo(
-        V, I, 
+        V,
+        I,
         pi_arr,
         Z,
         p=p,
-        a=a, b=b,
+        a=a,
+        b=b,
     )

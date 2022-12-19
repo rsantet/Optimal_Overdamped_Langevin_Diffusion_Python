@@ -2,6 +2,7 @@
 """
 import numpy as np
 
+
 def cos_2(x):
     return np.cos(2 * np.pi * x)
 
@@ -24,8 +25,10 @@ def sin_squared_cubed(x):
         + np.sin(np.pi / 2 + 2 * np.pi * (x - 0.2)) ** 3
     )
 
+
 def sin_two_wells(x):
     return np.sin(4 * np.pi * x) * (2 + np.sin(2 * np.pi * x))
+
 
 def sin_four_wells(x):
     return np.sin(8 * np.pi * x) * (2 + np.sin(4 * np.pi * x))
