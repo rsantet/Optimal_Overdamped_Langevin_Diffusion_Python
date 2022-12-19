@@ -1,4 +1,4 @@
-# Optimal Langevin diffusion
+# Optimal Overdamped Langevin diffusion
 
 This repository contains Python code to optimize the diffusion of overdamped Langevin dynamics. The method is described in the article "Optimizing the diffusion of overdamped Langevin dynamics" by T. Lelièvre, G. Pavliotis, G. Robin, R. Santet and G. Stoltz.
 
