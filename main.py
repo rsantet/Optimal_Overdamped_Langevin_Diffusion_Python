@@ -260,7 +260,7 @@ def optim_algo(V, I, pi, Z, p=2.0, a=0.0, b=np.inf, save=True, rewrite_save=True
         inv_mu_arr = np.fromiter(map(lambda x: np.exp(V(x)), XX), float)
         d_opt = x_opt * inv_mu_arr
         gap_opt = -res.fun
-        min_D = np.min(x_opt)
+        min_D = np.min(d_opt)
 
         Path(dir_string).mkdir(parents=True, exist_ok=True)
 
