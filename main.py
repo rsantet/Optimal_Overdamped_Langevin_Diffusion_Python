@@ -283,11 +283,11 @@ def optim_algo(V, I, pi, Z, p=2.0, a=0.0, b=np.inf, save=True, rewrite_save=True
 
 if __name__ == "__main__":
 
-    I = 100
+    I = 500
     p = 2
     a = 0.0
     b = np.inf
-    V = cos_4
+    V = sin_two_wells
 
     def mu(x):
         return np.exp(-V(x))
