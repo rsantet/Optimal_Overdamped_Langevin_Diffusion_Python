@@ -11,8 +11,16 @@ def cos_4(x):
     return np.cos(4 * np.pi * x)
 
 
+def cos_6(x):
+    return np.cos(6 * np.pi * x)
+
+
 def cos_8(x):
     return np.cos(8 * np.pi * x)
+
+
+def cos_10(x):
+    return np.cos(10 * np.pi * x)
 
 
 def cos_16(x):
