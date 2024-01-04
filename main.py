@@ -145,6 +145,11 @@ def optim_algo(V, I, beta=1.0, p=2.0, a=0.0, b=np.inf, save=True, rewrite_save=T
 
         np.divide(1 - valp, valp, out=valp)
 
+        val1 = valp[-1]
+        val2 = valp[-2]
+        val3 = valp[-3]
+        val4 = valp[-4]
+
         # retrieve eigenvector corresponding to first positive eigenvalue
         vecp2 = np.real(vecp[:, idx[-2]])
         # Normalize in case it is not done properly by the algorithm
@@ -157,24 +162,21 @@ def optim_algo(V, I, beta=1.0, p=2.0, a=0.0, b=np.inf, save=True, rewrite_save=T
 
         # for ergonomic reasons for gradient computation
         vp2 = np.zeros(I + 1)
-        vp2[range(I)] = vecp2
-        vp2[I] = vp2[0]
+        vp2[1:] = vecp2
+        vp2[0] = vp2[-1]
         # for ergonomic reasons for saving
         vp3 = np.zeros(I + 1)
-        vp3[range(I)] = vecp3
-        vp3[I] = vp3[0]
-
-        # matrix corresponding to the tri-diagonal matrix A
-        mat = np.array(([1, -1], [-1, 1]))
+        vp3[1:] = vecp3
+        vp3[0] = vp3[-1]
 
         # compute the gradient
         gradD = np.zeros(I)
-        for i in range(I):
-            gradD[i] = np.dot(np.dot(mat, vp2[range(i, i + 2)]), vp2[i : (i + 2)]) * I
 
+        for i in range(I):
+            gradD[i] = (vp2[i+1]-vp2[i])**2 * I
         # compute the constraint
         constraint = lp_constraint(x, I, p)
-        return gradD, valp[-1], valp[-2], valp[-3], valp[-4], constraint, vp2, vp3
+        return gradD, val1, val2, val3, val4, constraint, vp2, vp3
 
     def f0(x):
         """Function to be minimized during the optimization procedure
@@ -188,33 +190,6 @@ def optim_algo(V, I, beta=1.0, p=2.0, a=0.0, b=np.inf, save=True, rewrite_save=T
         f_val = objective_function(x, I, M)
         print(f_val, flush=True)
         return -f_val
-
-    def Df0(x):
-        """Gradient of the function which is minimized during the optimization procedure
-
-        Args:
-            x (list): variable to be optimized, equal to mu*D
-
-        Returns:
-            list: negative gradient of the spectral gap with respect to x
-        """
-        tup = objective_function_gradient(x, I, M)
-        if save:
-            first_eigenvalue.append(tup[1])
-            second_eigenvalue.append(tup[2])
-            third_eigenvalue.append(tup[3])
-            fourth_eigenvalue.append(tup[4])
-            constraints.append(tup[5])
-            global second_eigenvector
-            second_eigenvector = tup[6]
-            global third_eigenvector
-            third_eigenvector = tup[7]
-        return -tup[0]
-
-    def mu(V, beta, x):
-        return np.exp(-beta * V(x))
-
-    ##### Optimization procedure
 
     # Saving process
     if save:
@@ -240,6 +215,39 @@ def optim_algo(V, I, beta=1.0, p=2.0, a=0.0, b=np.inf, save=True, rewrite_save=T
         third_eigenvector = np.zeros(I + 1)
         fourth_eigenvalue = []
         constraints = []
+        global old_d
+        old_d = 0.0
+        diff_norm_d = []
+
+    def Df0(x):
+        """Gradient of the function which is minimized during the optimization procedure
+
+        Args:
+            x (list): variable to be optimized, equal to mu*D
+
+        Returns:
+            list: negative gradient of the spectral gap with respect to x
+        """
+        tup = objective_function_gradient(x, I, M)
+        if save:
+            global old_d
+            diff_norm_d.append(np.max(np.abs(x - old_d)))
+            old_d = x
+            first_eigenvalue.append(tup[1])
+            second_eigenvalue.append(tup[2])
+            third_eigenvalue.append(tup[3])
+            fourth_eigenvalue.append(tup[4])
+            constraints.append(tup[5])
+            global second_eigenvector
+            second_eigenvector = tup[6]
+            global third_eigenvector
+            third_eigenvector = tup[7]
+        return -tup[0]
+
+    def mu(V, beta, x):
+        return np.exp(-beta * V(x))
+
+    ##### Optimization procedure
 
     # Construct the approximation of the non-normalized density of the Boltzmann-Gibbs measure
     XX = [i / I for i in range(0, I)]
@@ -250,6 +258,7 @@ def optim_algo(V, I, beta=1.0, p=2.0, a=0.0, b=np.inf, save=True, rewrite_save=T
 
     # First guess for the optimization procedure, D=1/mu (homogenized diffusion)
     x_init = np.ones(I)
+    old_d = x_init
 
     # Constraints on the values of mu*D
     bounds = Bounds(a, b)
@@ -269,8 +278,8 @@ def optim_algo(V, I, beta=1.0, p=2.0, a=0.0, b=np.inf, save=True, rewrite_save=T
         jac=Df0,
         constraints=ineq_cons_norm,
         bounds=bounds,
-        options={"disp": True, "maxiter": 2000},
-        tol=1e-8,
+        options={"disp": True, "maxiter": 5000, "ftol": 1e-15},
+        tol=1e-15,
     )
 
     # If failure
@@ -303,6 +312,7 @@ def optim_algo(V, I, beta=1.0, p=2.0, a=0.0, b=np.inf, save=True, rewrite_save=T
         np.savetxt(dir_string + "constraint.txt", constraints)
         np.savetxt(dir_string + "second_eigenvector.txt", second_eigenvector)
         np.savetxt(dir_string + "third_eigenvector.txt", third_eigenvector)
+        np.savetxt(dir_string + "diff_norm_d.txt", diff_norm_d)
 
     # return res object
     return res
@@ -314,8 +324,11 @@ if __name__ == "__main__":
     a = 0.0
     b = np.inf
     beta = 1.0
-    V = cos_2
-
+    V = sin_two_wells
     # D_constant = (np.sum(mu_arr**p)/I)**(-1/p)
 
-    optim_algo(V, I, beta, p, a, b, save=True, rewrite_save=True)
+    I_range = [1000]
+
+    for I in I_range:
+        print(I)
+        optim_algo(V, I, beta, p, a, b, save=True, rewrite_save=True)
