@@ -14,3 +14,7 @@ The repository contains:
 - plot_optimized_diffusion.py: plot the optimized diffusion obtain from the main.py script
 - RWMH.py: run the RWMH algorithm
 - plot_RWMH.py: plot a sample trajectory of the RWMH algorithm
+- msd.py: compute and plot the Mean Square Displacement for various diffusion coefficients (optimal, homogenized, constant)
+- transition_times.py: compute the duration time to transition between two metastable states of a 1D double well potential for various diffusion coefficients (optimal, homogenized, constant)
+- plot_transition_times.py: plot the results obtained from the previous script
+- varying_lower_bound.py: compute the optimal diffusion coefficient for various lower bounds $a\in[0,1]$.
